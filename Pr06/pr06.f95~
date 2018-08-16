@@ -1,0 +1,155 @@
+program DNR
+  implicit none
+  character(8) :: filename
+  integer, dimension (:,:), allocatable :: arrN
+  integer :: max_rows = 5
+  integer :: max_cols = 7
+  integer :: rowNum, colNum
+  !Total number of rows in the file
+  integer :: stats, unitA, unitB
+  
+  print '(A)', "Please enter a file name to be read:"
+  read *, filename
+
+  print *, "Enter a file number greater than 15 (integer) to open the filename you've entered for reading."
+  read '(I3)', unitA 
+  call open_file(filename, unitA)
+  call read_file(max_cols, max_rows, stats, arrN)
+  call display_it(arrN, max_rows, max_cols)
+
+ !******
+  do while((rowNum .NE. -1) .AND. (colNum .NE. -1)) 
+  
+  call search_collect(arrN, max_rows, max_cols, rowNum, colNum)
+  if ((rowNum .EQ. -1) .AND. (colNum .EQ. -1)) then
+     exit
+  endif
+
+enddo
+ !******
+   call display_it(arrN, max_rows, max_cols)
+
+   print *, "Enter an integer greater than 15 that is not identical to the previous integer you've entered"
+   read '(I3)', unitB
+  call write_it(arrN, max_rows, max_cols, stats, unitB)
+!************************************************************
+
+contains
+  subroutine open_file(filename, unitA)
+    !opens file and reads it into an array
+    character(8), intent(in) :: filename
+    integer, intent(in) :: unitA
+   
+    open(unit = unitA, file = filename, status = "old", action='read')
+
+  end subroutine open_file
+!*************************************************************************************
+  subroutine read_file(max_cols, max_rows, stats, arrN)
+
+    integer, intent(inout) :: max_cols
+    integer, intent(inout) :: max_rows
+    integer, intent(inout) :: stats
+    integer, dimension(:,:), allocatable, intent(out) :: arrN
+    integer :: row, col, tot_cols, tot_rows
+
+    
+    READ(unitA, *, iostat = stats)max_rows, max_cols
+      if (stats /= 0) stop "Unable to read matrix dimentions"
+      allocate(arrN(max_rows,max_cols), stat = stats)
+      if (stats /= 0) stop 'Memory not allocated in array'
+      
+      do row = 1, max_rows
+      read(unitA, *, iostat = stats) (arrN(row, col), col = 1, max_cols)
+      if (stats /= 0) stop "Problem Reading"
+      enddo
+      
+       
+    close(unit=unitA, status="keep")
+ 
+  end subroutine read_fle
+!*************************************************************************************
+  subroutine search_collect(arrN, max_rows, max_cols, rowNum, colNum)
+    integer, dimension(:,:), intent(out) :: arrN
+    integer, intent(in) :: max_rows
+    integer, intent(in) :: max_cols
+    integer, intent(out) :: rowNum, colNum
+    
+    !Ask for users to input
+    print *, "We'll now have you choose an index to store observation numbers"
+
+    print *, "Please enter a row number"
+    read *, rowNum
+    if ((rowNum > max_rows) .OR. (rowNum .LT. -1))then
+      stop "It appears you have entered an incorrect row number. Goodbye."
+    endif
+
+    print *, "Please enter a column number"
+    read *, colNum
+    if ((colNum > max_cols) .OR. (colNum .LT. -1)) then
+       stop "It appears you have entered an incorrect column number. Goodbye."
+    endif
+     
+    if ((colNum .LT. 0) .AND. (rowNum .GT. -1)) then 
+    print *, "You have entered a value that does not exist in this grid."
+    endif
+
+    if ((colNum .GT. -1) .AND. (rowNum .LT. 0)) then
+     print *, "You have entered a value that does not exist in this grid."
+  endif
+
+  print '(A, I4)', "The value at the index you have selected is",  arrN(rowNum, colNum)
+
+  if ((rowNum .NE. -1) .and.(colNum .NE. -1)) then
+  
+  call change_index(arrN, rowNum, colNum)
+endif
+
+  end subroutine search_collect
+  !***********************************************************************************
+  subroutine change_index(arrN, rowNum, colNum)
+    integer, dimension(:,:), intent(out) :: arrN
+    integer, intent(in) :: rowNum, colNum
+    integer :: observations, uses
+
+    print *, "Please enter the amount of new observations recorded"
+    read('(I4)', iostat = uses), observations
+    if (uses /= 0) stop "You likely did not use the correct format with your input. Integers Only."
+
+
+    arrN(rowNum, colNum) = arrN(rowNum, colNum) + observations
+
+    print '(A, I4.1)', "The new value at the index you have selected is ", arrN(rowNum, colNum) 
+    
+  end subroutine change_index
+
+  !************************************************************************************
+  subroutine display_it(arrN, max_rows, max_cols)
+    integer, dimension(:,:), intent(in) :: arrN
+    integer, intent(in) :: max_rows, max_cols
+    integer :: row, col
+
+    print '(10(I3, x))', max_rows, max_cols
+
+    do row = 1, max_rows
+       print '(10(I6, x))', (arrN(row, col), col = 1, max_cols)
+    enddo
+  end subroutine display_it
+  !*************************************************************************************
+  subroutine write_it(arrN, max_rows, max_cols, stats, unitB)
+  integer, dimension(:,:), intent(in) :: arrN
+  integer, intent(in) :: max_rows, max_cols, unitB
+  integer, intent(out) :: stats
+  integer :: row, col
+  
+    open(unit = unitB, file = "use2.dat", status = "replace", action = 'write')    
+    write(unitB, '(10(I3, x))', iostat = stats)max_rows, max_cols
+    if (stats /= 0) stop "Problem writing file size"
+    do row = 1, max_rows
+    write(unitB, '(10(I6, x))', iostat = stats) (arrN(row, col), col = 1, max_cols)
+    if (stats /= 0) stop "Problem writing file content"
+    enddo
+    close(unit = unitB, status="keep")
+  end subroutine write_it
+  
+  
+end program DNR
