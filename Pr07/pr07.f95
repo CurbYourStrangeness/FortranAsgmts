@@ -116,7 +116,7 @@ if (stuNum .EQ. records(loop)%stNum ) then
 endif
 enddo
 if (i /= 1) then
-print *, "You have enetered a number that does not match any of the numbers on the list."
+print *, "You have entered a number that does not match any of the numbers on the list."
 endif
 i = 0
 print *, "Please enter a new stuNum"
