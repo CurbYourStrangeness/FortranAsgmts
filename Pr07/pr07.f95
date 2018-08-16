@@ -55,9 +55,7 @@ end subroutine fopen
 subroutine populateType(units, records)
   integer, intent(in) :: units
   TYPE(struct1), dimension(56), intent(out) :: records
-  TYPE(struct1) :: store
-  integer :: test, loop, first
-  character(31) :: use     
+  integer :: test, loop   
   
  do loop = 1, 56, 1
     read(units, 15, iostat=test)records(loop)
